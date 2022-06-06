@@ -7,6 +7,8 @@ services:
       - 3000:3000
     restart: always
     network_mode: "host"
+    volumes:
+      - grafana-data:/var/lib/grafana
 
   prometheus:
     image: prom/prometheus
@@ -14,7 +16,9 @@ services:
       - 9090:9090
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
     network_mode: "host"
+    restart: always
 
   dlsmon:
     build:
@@ -26,7 +30,12 @@ services:
     environment:
       DLSMON_ADDR: "127.0.0.1:8080"
       DLSMON_CMD: "ssh -oHostkeyAlgorithms=+ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa -oStrictHostKeyChecking=no -i .ssh/key root@riko.lan \"/etc/init.d/dsl_control status\""
-      DLSMON_SLEEP: "1"
+      DLSMON_SLEEP: "120"
     network_mode: "host"
     volumes:
       - ./ssh:/root/.ssh
+    restart: always
+
+volumes:
+  grafana-data:
+  prometheus-data:

@@ -4,7 +4,7 @@ global:
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
-    monitor: 'codelab-monitor'
+    monitor: 'dslmon-monitor'
 
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
@@ -13,7 +13,7 @@ scrape_configs:
   - job_name: 'dslmon'
 
     # Override the global default and scrape targets from this job every 5 seconds.
-    scrape_interval: 5s
+    scrape_interval: 180s
 
     static_configs:
       - targets: ['localhost:8080']
