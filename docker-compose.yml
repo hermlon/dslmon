@@ -5,7 +5,7 @@ services:
     image: grafana/grafana-oss
     ports:
       - 3000:3000
-    restart: always
+    restart: unless-stopped
     network_mode: "host"
     volumes:
       - grafana-data:/var/lib/grafana
@@ -24,9 +24,9 @@ services:
       - "--web.console.templates=/usr/share/prometheus/consoles"
       - "--storage.tsdb.retention.time=10y"
     network_mode: "host"
-    restart: always
+    restart: unless-stopped
 
-  dlsmon:
+  dslmon:
     build:
       context: .
       args:
@@ -40,7 +40,7 @@ services:
     network_mode: "host"
     volumes:
       - ./ssh:/root/.ssh
-    restart: always
+    restart: unless-stopped
 
 volumes:
   grafana-data:
