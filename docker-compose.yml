@@ -34,9 +34,10 @@ services:
     ports:
       - 8080:8080
     environment:
-      DLSMON_ADDR: "127.0.0.1:8080"
-      DLSMON_CMD: "ssh -oHostkeyAlgorithms=+ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa -oStrictHostKeyChecking=no -i .ssh/key root@riko.lan \"/etc/init.d/dsl_control status\""
-      DLSMON_SLEEP: "120"
+      DSLMON_ADDR: "127.0.0.1:8080"
+      #DLSMON_CMD: "ssh -oHostkeyAlgorithms=+ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa -oStrictHostKeyChecking=no -i .ssh/key root@192.168.1.1 \"/etc/init.d/dsl_control status\""
+      DSLMON_CMD: "ssh -i .ssh/key hermlon@localhost \"vcgencmd measure_temp\""
+      DSLMON_SLEEP: "120"
     network_mode: "host"
     volumes:
       - ./ssh:/root/.ssh

@@ -11,17 +11,15 @@
 #include <regex>
 #include <iostream>
 
-#include <dlsmon_config.h>
-
 int main() {
   using namespace prometheus;
 
-	char* serve_addr = getenv("DLSMON_ADDR");
-	char* openwrt_cmd = getenv("DLSMON_CMD");
-	int sleep_interval = std::atoi(getenv("DLSMON_SLEEP") ? getenv("DLSMON_SLEEP") : "1");
+	char* serve_addr = getenv("DSLMON_ADDR");
+	char* cmd = getenv("DSLMON_CMD");
+	int sleep_interval = std::atoi(getenv("DSLMON_SLEEP") ? getenv("DSLMON_SLEEP") : "1");
 
-	if(serve_addr == nullptr || openwrt_cmd == nullptr) {
-		std::cerr << "environment variables DLSMON_ADDR or DLSMON_CMD unspecified" << std::endl;
+	if(serve_addr == nullptr || cmd == nullptr) {
+		std::cerr << "environment variables DSLMON_ADDR or DSLMON_CMD unspecified" << std::endl;
 		return 1;
 	}
 
@@ -37,27 +35,12 @@ int main() {
   //
   // @note please follow the metric-naming best-practices:
   // https://prometheus.io/docs/practices/naming/
-  auto& up_gauge = BuildGauge()
-                             .Name("dlsmon_up")
-                             .Help("whether dsl link is up")
+  auto& cpu_temp_gauge = BuildGauge()
+                             .Name("cpu_temp")
+                             .Help("cpu temperature")
                              .Register(*registry);
 
-	auto& up = up_gauge.Add({});
-
-  auto& uptime_gauge = BuildGauge()
-                             .Name("dlsmon_uptime")
-                             .Help("uptime in seconds")
-                             .Register(*registry);
-
-	auto& uptime = uptime_gauge.Add({});
-
-  auto& noise_gauge = BuildGauge()
-                             .Name("dlsmon_noise")
-                             .Help("noise margin (SNR)")
-                             .Register(*registry);
-
-	auto& noise_up = noise_gauge.Add({{"direction", "up"}});
-	auto& noise_down = noise_gauge.Add({{"direction", "down"}});
+	auto& cpu_temp = cpu_temp_gauge.Add({});
 
   // ask the exposer to scrape the registry on incoming HTTP requests
   exposer.RegisterCollectable(registry);
@@ -68,29 +51,16 @@ int main() {
   for (;;) {
     std::this_thread::sleep_for(std::chrono::seconds(sleep_interval));
 
-		FILE* response = popen(openwrt_cmd, "r");
+		FILE* response = popen(cmd, "r");
 
 		while(fgets(buffer, LENGTH, response)) {
-			std::regex reg_is_up("^Line State:\\s*(UP)?");
-			std::cmatch match_up;
-			std::regex_search(buffer, match_up, reg_is_up);
-			if(!match_up.empty()) {
-				up.Set((int) (match_up[1].length() != 0));
-			}
-
-			std::regex reg_uptime("^Line Uptime Seconds:\\s*(\\d*)");
-			std::cmatch match_uptime;
-			std::regex_search(buffer, match_uptime, reg_uptime);
-			if(!match_uptime.empty()) {
-				uptime.Set(std::stoi(match_uptime[1].str()));
-			}
-
-			std::regex reg_noise_margin("^Noise Margin \\(SNR\\):\\s*Down: (\\d*\\.\\d) dB \\/ Up: (\\d*\\.\\d) dB");
-			std::cmatch match_noise_margin;
-			std::regex_search(buffer, match_noise_margin, reg_noise_margin);
-			if(!match_noise_margin.empty()) {
-				noise_down.Set(std::stof(match_noise_margin[1].str()));	
-				noise_up.Set(std::stof(match_noise_margin[2].str()));	
+			std::regex reg_cpu_temp("^temp=(\\d*\\.\\d*)");
+			std::cmatch match_cpu_temp;
+			std::regex_search(buffer, match_cpu_temp, reg_cpu_temp);
+			if(!match_cpu_temp.empty()) {
+				cpu_temp.Set(std::stof(match_cpu_temp[1].str()));
+			} else {
+				std::cerr << "Could not parse response: " << buffer;
 			}
 		}
 
